@@ -7,7 +7,10 @@ namespace YumBlazor.Data
     {
         public DbSet<Category> Category { get; set; }
         public DbSet<Product> Products{ get; set; }
-        protected override void OnModelCreating(ModelBuilder builder)
+        public DbSet<ShoppingCart> ShoppingCarts { get; set; }
+		public DbSet<OrderHeader> OrderHeaders{ get; set; }
+		public DbSet<OrderDetail> OrderDetails { get; set; }
+		protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
             builder.Entity<Category>().HasData(

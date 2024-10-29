@@ -2,13 +2,14 @@
 @inject ICategoryRepository _categories
 @inject IJSRuntime _Js
 @inject NavigationManager _navigationManager
+@inject IWebHostEnvironment _webHostEnvironment
+
 
 
 @page "/product-create"
 @page "/product-edit/{id:int}"
-<h3>ProductUpsert</h3>
-
-
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
 
 @if (IsProcessing)
 {
@@ -41,10 +42,38 @@ else
                         <ValidationMessage For="@(()=>Product.Price)"></ValidationMessage>
                     </div>
                     <div class="form-floating py-3 col-12">
-                        <InputText @bind-Value="Product.Description" class="form-control" id="name"> </InputText>
+                       @*  <InputText @bind-Value="Product.Description" class="form-control" id="name"> </InputText>
                         <label for="Description">Description</label>
+                        <ValidationMessage For="@(()=>Product.Description)"></ValidationMessage> *@
+                        <label for="Description">Description</label>
+                        <br />
+                        <RadzenHtmlEditor @bind-Value="Product.Description" style="height: 450px;" UploadUrl="upload/image">
+                        </RadzenHtmlEditor>
                         <ValidationMessage For="@(()=>Product.Description)"></ValidationMessage>
+
+
+
                     </div>
+                    @if (Product.ImageUrl == null)
+                    {
+                        <div class="form-floating py-3 col-12">
+                            <InputFile OnChange="LoadFiles" class="form-control" id="customeFile">
+                            </InputFile>
+                            <label for="customeFile">Upload Image</label>
+                        </div>
+                    }
+                    @if (Product.ImageUrl != null)
+                        {
+                            <div class="row pt-3">
+                                <div class="col-3">
+                                    <img src="@Product.ImageUrl" class="img-thumbnail" alt="xyz" />
+                                </div>
+                                <div class="col-9">
+                                    <i class="bi bi-trash btn btn-outline-danger" @onclick="DeleteImage">Remove</i>
+                                </div>
+                            </div>                       
+                        }
+                   
                     <div class="form-floating py-3 col-12">
 
                         <InputSelect class="form-select" id="categoryID" @bind-Value="Product.CategoryId">
@@ -53,15 +82,14 @@ else
                             {
                                 <option value="@category.Id">@category.Name</option>
                             }
-                        </InputSelect>
-                        
+                        </InputSelect>                       
                         <label for="Description">Category</label>
                         <ValidationMessage For="@(()=>Product.Description)"></ValidationMessage>
                     </div>
                     <div class="row mt-3">
                         <div class="col-6 col-md-3">
                             <button type="submit" class="btn btn-primary form-control" disabled="@IsProcessing">
-                                <i class="bi bi-save"></i>Save
+                                <i class="bi bi-save"></i>@(Id == 0 ? "Save" : "Update")
                             </button>
                         </div>
                         <div class="col-6 col-md-3">
@@ -83,7 +111,14 @@ else
     public IEnumerable<Category> Categories{ get; set; } = new List<Category>();
     [Parameter]
     public int Id { get; set; }
+    public bool _isImageLoading { get; set; } = false;
+    public string? _direcoryPath { get; set; }
+    protected override Task OnInitializedAsync()
+    {
+        _direcoryPath =Path.Combine(_webHostEnvironment.WebRootPath,"Images","product");
+        return base.OnInitializedAsync();
 
+    }
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -125,10 +160,44 @@ else
         Categories = await _categories.GetAllAsync();
         return Categories;
     }
-    // private async Task<Product> GetProduct(int id)
-    // {
-    //     Product = await _product.GetAsync(id);
-    //     return Product;
-    // }
-    
-}
+    private async Task LoadFiles(InputFileChangeEventArgs eventArgs)
+    {
+        _isImageLoading = true;
+        var file = eventArgs.File;
+        System.IO.FileInfo fileInfo = new System.IO.FileInfo(file.Name);
+        var NewFileName = $"{Guid.NewGuid()}.{fileInfo.Extension}";
+        if (!Directory.Exists(_direcoryPath))
+        {
+            Directory.CreateDirectory(_direcoryPath);
+        }
+        var path = Path.Combine(_direcoryPath, NewFileName);
+        await using FileStream fileStream = new(path, FileMode.Create);
+        await file.OpenReadStream(file.Size).CopyToAsync(fileStream);
+        Product.ImageUrl = $"/Images/product/{NewFileName}";
+        var url = Product.ImageUrl;
+        _isImageLoading = false;
+    }
+    void DeleteImage()
+    {
+        if (Product.ImageUrl == null)
+        {
+            return;
+        }
+        else
+        {
+            var CurrentProductUrl = Product.ImageUrl.Split("/").Reverse().First();
+            var FilePathToDelete = Path.Combine(_direcoryPath, CurrentProductUrl).Split("/").Reverse().First();
+            if (FilePathToDelete != null)
+            {
+                if (File.Exists(FilePathToDelete))
+                {
+                    File.Delete(FilePathToDelete);
+                    Product.ImageUrl = null;
+                    return;
+                }
+                return;
+            }
+        }
+    }
+ }
+

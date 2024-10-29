@@ -1,0 +1,123 @@
+﻿@page  "/order/list"
+@inject YumBlazor.Repository.IRepository.ICategoryRepository _categoryRepository
+@inject IOrderHeaderRpository _orderHeaderRpository
+@using YumBlazor.Data
+@inject IJSRuntime _Js
+@inject NavigationManager _navigationManager
+@using Microsoft.AspNetCore.Authorization
+
+@attribute [Authorize,]
+
+@if (IsProcessing)
+{
+    <div class="position-absolute w-75 h-75 d-flex flex-column align-items-center bg-white justify-content-center">
+        <div class="position-absolute w-100 vh-100 d-flex flex-column align-items-center bg-white justify-content-center">
+            <img src="/Images/loading.gif" alt="loading.." />
+        </div>
+    </div>
+}
+else
+{
+    <div class="card border-0 shadow mt-0">
+        <div class="card-header bg-black bg-gradient m-lg-0 py-3 ">
+            <div class="row">
+                <div class="text-center col-12">
+                    <h2 class="text-white py-2 ">Order List</h2>
+
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-4 ">
+           
+            @if (OrderHeaders.Any())
+            {
+                @* <table class="table table-bordered table-striped ">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                            <th>Order Total</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var obj in OrderHeaders)
+                        {
+                            <tr>
+                                <td>@obj.Name</td>
+                                <td>@obj.PhoneNumber</td>
+                                <td>@obj.Email</td>
+                                <td>@obj.OrderTotal</td>
+                                <td>@obj.OrderDate</td>
+                                <td>@obj.Status</td>
+                                <td>
+                                    <a href="@($"order/details/{obj.Id}")" class="btn btn-primary"><i class="bi bi-pencil-square"></i>Details</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table> *@
+       
+
+ 
+                <RadzenDataGrid AllowFiltering="true"
+                    AllowColumnResize="true" 
+                    AllowAlternatingRows="false"
+                    FilterMode="FilterMode.Advanced"
+                    AllowSorting="true" PageSize="5"
+                    AllowPaging="true"
+                    PagerHorizontalAlign="HorizontalAlign.Left"
+                    ShowPagingSummary="true"
+                    Data="@OrderHeaders" ColumnWidth="300px" 
+                    LogicalFilterOperator="LogicalFilterOperator.Or" 
+                    SelectionMode="DataGridSelectionMode.Single" >
+                    <Columns>
+                        <RadzenDataGridColumn Property="Id" Filterable="false" Title="ID" Frozen="true" Width="80px" TextAlign="TextAlign.Center" />
+                        <RadzenDataGridColumn Property="Name" Title="Name" Frozen="true" Width="160px" />
+                        <RadzenDataGridColumn Property="PhoneNumber" Title="Phone Number" Width="160px" />
+                        <RadzenDataGridColumn Property="Email" Title="Email Address" Width="200px" />
+                        <RadzenDataGridColumn Property="OrderTotal" Title="Order Total" FormatString="{0:C}" Width="120px" />
+                        <RadzenDataGridColumn Property="OrderDate" Title="Order Date" FormatString="{0:d}" Width="160px" />
+                        <RadzenDataGridColumn Property="Status" Title="Status" FormatString="{0:d}" Width="160px" />
+                        <RadzenDataGridColumn Title="Action" Sortable="false" Filterable="false" Width="80px" TextAlign="TextAlign.Center">
+                            <Template Context="OrderHeader">
+                                <RadzenButton Shade="Shade.Lighter" Text="Details" ButtonStyle="ButtonStyle.Primary"
+                                              Click="@(()=>_navigationManager.NavigateTo($"order/details/{OrderHeader.Id}"))"></RadzenButton>
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+
+                
+            }
+        </div>
+
+    </div>
+}
+@code {
+    private bool IsProcessing = true;
+    private IEnumerable<OrderHeader> OrderHeaders { get; set; } = new List<OrderHeader>();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            //IsProcessing = true;
+            //await Task.Delay(2000);
+            await LoadOrderHeaders();
+            IsProcessing = false;
+            StateHasChanged();
+
+        }
+    }
+    protected async Task<IEnumerable<OrderHeader>> LoadOrderHeaders()
+    {
+        OrderHeaders = await _orderHeaderRpository.GetAllAsync();
+        return OrderHeaders;
+    }
+
+}

@@ -1,17 +1,20 @@
 ﻿@inherits LayoutComponentBase
-
+@using YumBlazor.Utilities
+@inject AuthenticationStateProvider _authenticationStateProvider
 <div class="page">
-    @* <div class="sidebar">
+     <AuthorizeView Roles="@SD.Admin_Role">
+    <div class="sidebar">
         <NavMenu />
-
-    </div> *@
-
+    </div>
+    </AuthorizeView>
     <main>
+        @if(isNavbarVisible)
+        {
         <NavBar></NavBar>
-        <article class="content">
-            @Body
-        </article>
-    </main>
+
+        }
+             @Body
+     </main>
 </div>
 
 <div id="blazor-error-ui">
@@ -19,3 +22,29 @@
     <a href="" class="reload">Reload</a>
     <a class="dismiss">🗙</a>
 </div>
+
+@code
+{
+    protected bool isNavbarVisible { get; set; }
+    protected override async void OnInitialized()
+    {
+        isNavbarVisible = await ShowNavBar();
+    }
+
+    private async Task<bool> ShowNavBar()
+    {
+        var authState = await _authenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var authenticated = user.Identity is not null && user.Identity.IsAuthenticated;
+        if(!authenticated)
+        {
+            return true;
+        }
+        //navbar should not be displayed
+        if(!user.IsInRole(SD.Admin_Role))
+        {
+            return true;
+        }
+        return false;
+    } 
+}
