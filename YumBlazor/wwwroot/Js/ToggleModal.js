@@ -1,7 +1,7 @@
 ﻿function ShowConfimationModal()
 {
-    bootstrap.Modal.getOrCreateInstance(document.getElementById('deleteModal').show();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('deleteModal').show());
 }
 function HideConfimationModal() {
-    bootstrap.Modal.getOrCreateInstance(document.getElementById('deleteModal').hide();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('deleteModal').hide());
 }

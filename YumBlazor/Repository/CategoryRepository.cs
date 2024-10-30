@@ -32,7 +32,7 @@ namespace YumBlazor.Repository
 
         public async Task<Category> GetAsync(int id)
         {
-            var category = _applicationDbContext.Category.FirstOrDefault(c => c.Id == id);  
+            var category = await _applicationDbContext.Category.FirstOrDefaultAsync(c => c.Id == id);  
             if(category != null)    
                 return category;
             return new Category();
